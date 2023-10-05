@@ -1,45 +1,59 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { parse } from "json2csv";
+import "./App.css";
 import { saveAs } from "file-saver";
 
-import "./App.css";
-
 function App() {
-	const [data, setData] = useState<any>([]);
+  const [data, setData] = useState([])
 
-	const fetchData = async () => {
-		try {
-			const res = await axios.get("https://api.publicapis.org/entries");
-			setData(res.data.entries);
-			console.log(data);
-			convertAndSaveToCSV(res.data.entries);
-		} catch (error) {
-			console.error("Error fetching data:", error);
-		}
-	};
+  const fetchData = async () => {
+    try {
+      const res = await axios.get("https://api.publicapis.org/entries");
+      setData(res.data.entries);
+      // console.log(data);
 
-	const convertAndSaveToCSV = (data: any) => {
-		try {
-			const csvData = parse(data);
-			const blob = new Blob([csvData], {
-				type: "text/csv;charset=utf-8",
-			});
-			saveAs(blob, "data.csv");
-		} catch (error) {
-			console.error("Error converting data to CSV:", error);
-		}
-	};
+      const jsonkeys = Object.keys(data[0])
+      // console.log(jsonkeys);
 
-	return (
-		<>
-			<div>
-				<button onClick={fetchData}>
-					Fetch API & download file as CSV
-				</button>
-			</div>
-		</>
-	);
+      const headerData = jsonkeys.join(",");
+      // console.log(headerData)
+
+      const rowData = data.map((item) => {
+        // description values has commas in the string, resulting in many columns.
+        item.API = item.API.replaceAll(",", "")
+        item.Description = item.Description.replaceAll(",", "")
+        // console.log(item)
+        return jsonkeys.map((key) => item[key]).join(',')
+      })
+
+      // console.log(rowData)
+
+      const json2csv = `${headerData}\n${rowData.join('\n')}`;
+      // console.log(json2csv)
+
+      // learnt that CSV is called comma separated values, and we need to convert the json into a string with 
+      // comma separated values in order to export it into a .csv file.
+
+      // as browser cannot use fs, used a different approach to 'download' files into user's local filesystem
+      // explored "file-saver" library that can help with downloads
+      const csvBlob = new Blob([json2csv], { type: "text/csv;charset=utf-8" });
+      saveAs(csvBlob, "data.csv");
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+
+  return (
+    <>
+      <div>
+        <button onClick={fetchData}>
+          Fetch API & download file as CSV
+        </button>
+      </div>
+    </>
+  );
 }
 
 export default App;
