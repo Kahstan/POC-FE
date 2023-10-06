@@ -5,6 +5,7 @@ import { saveAs } from "file-saver";
 
 function App() {
   const [data, setData] = useState([])
+  const [isDownloaded, setIsDownloaded] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -34,10 +35,11 @@ function App() {
       // learnt that CSV is called comma separated values, and we need to convert the json into a string with 
       // comma separated values in order to export it into a .csv file.
 
-      // as browser cannot use fs, used a different approach to 'download' files into user's local filesystem
+      // as browser cannot use fs, nodejs is not a browser API, I used a different approach to 'download' files into user's local filesystem
       // explored "file-saver" library that can help with downloads
       const csvBlob = new Blob([json2csv], { type: "text/csv;charset=utf-8" });
-      saveAs(csvBlob, "data.csv");
+      saveAs(csvBlob, "data.csv")
+      setIsDownloaded(true)
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -48,9 +50,10 @@ function App() {
   return (
     <>
       <div>
-        <button onClick={fetchData}>
+        {isDownloaded ? <div>File downloaded</div> : <button onClick={fetchData}>
           Fetch API & download file as CSV
-        </button>
+        </button>}
+
       </div>
     </>
   );
